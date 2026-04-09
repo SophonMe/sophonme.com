@@ -674,22 +674,27 @@ aicontext install</div>
       const stageIndex = clamp(index, 0, stages.length - 1);
       const total = story.offsetHeight - window.innerHeight;
       const targetY = total <= 0 ? 0 : (stageIndex / (stages.length - 1)) * total;
-      animateScrollTo(targetY, 720);
+      const isMobile = window.innerWidth <= 800;
+      animateScrollTo(targetY, isMobile ? 500 : 720, isMobile);
     }
 
-    function animateScrollTo(targetY, duration) {
+    function animateScrollTo(targetY, duration, isMobile) {
       const startY = window.scrollY;
       const delta = targetY - startY;
       const startTime = performance.now();
 
-      function easeInOutCubic(t) {
+      function easeDesktop(t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function easeMobile(t) {
+        return 1 - Math.pow(1 - t, 3);
       }
 
       function frame(now) {
         const elapsed = now - startTime;
         const progress = clamp(elapsed / duration, 0, 1);
-        const eased = easeInOutCubic(progress);
+        const eased = isMobile ? easeMobile(progress) : easeDesktop(progress);
         window.scrollTo(0, startY + delta * eased);
         if (progress < 1) {
           requestAnimationFrame(frame);
@@ -813,10 +818,11 @@ aicontext install</div>
     }
 
     function scatterState(w, h) {
+      const isMobile = w <= 800;
       const centers = [
         { x: w * 0.26, y: h * 0.35 },
         { x: w * 0.72, y: h * 0.3 },
-        { x: w * 0.54, y: h * 0.72 }
+        { x: w * 0.54, y: h * (isMobile ? 0.62 : 0.72) }
       ];
       return shapes.map((shape) => {
         if (shape.index >= 3) {
@@ -943,6 +949,11 @@ aicontext install</div>
 
     function earthState(w, h) {
       return globeState(w, h, 0);
+    }
+
+    function earthToModelsState(w, h, t) {
+      const spin = (-Math.PI / 10) * ease(clamp(t, 0, 1));
+      return globeState(w, h, spin);
     }
 
     function globeState(w, h, spin) {
@@ -1129,6 +1140,7 @@ aicontext install</div>
 
     function mixStates(a, b, t, keyA, keyB, w, h) {
       if (keyA === "earth" && keyB === "models") {
+        a = earthToModelsState(w, h, t);
         const collapse = centerDotCollapseState(w, h);
         const local = ease(t);
         return a.map((item, index) => {
@@ -1293,6 +1305,7 @@ aicontext install</div>
 
     function updateCopy(base, next, t, progress) {
       const source = t < 0.5 ? stages[base] : stages[next];
+      const isMobile = window.innerWidth <= 800;
       if (activeCopyKey !== source.key) {
         activeCopyKey = source.key;
         copy.classList.add("card-entering");
@@ -1307,12 +1320,15 @@ aicontext install</div>
       copyText.innerHTML = highlightAIContext(source.text);
       copySub.innerHTML = highlightAIContext(source.sub || "");
       copy.classList.toggle("install", Boolean(source.install));
-      const desiredWidth = Math.min(window.innerWidth - 24, Math.max(320, source.w * window.innerWidth));
+      const widthRatio = isMobile && source.mobileW ? source.mobileW : source.w;
+      const xRatio = isMobile && source.mobileX !== undefined ? source.mobileX : source.x;
+      const yRatio = isMobile && source.mobileY !== undefined ? source.mobileY : source.y;
+      const desiredWidth = Math.min(window.innerWidth - 24, Math.max(320, widthRatio * window.innerWidth));
       const maxX = Math.max(12, window.innerWidth - desiredWidth - 12);
-      const x = clamp(source.x * window.innerWidth, 12, maxX);
+      const x = clamp(xRatio * window.innerWidth, 12, maxX);
       const approxHeight = source.install ? 250 : source.sub ? 220 : 160;
       const maxY = Math.max(12, window.innerHeight - approxHeight - 12);
-      const y = clamp(source.y * window.innerHeight, 12, maxY);
+      const y = clamp(yRatio * window.innerHeight, 12, maxY);
       copy.style.width = desiredWidth + "px";
       copy.style.transform = "translate3d(" + x + "px," + y + "px,0)";
       progressLabel.textContent = String(base + 1).padStart(2, "0") + " / " + String(stages.length).padStart(2, "0");
