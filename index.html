@@ -50,6 +50,21 @@
       mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 88%);
     }
 
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.06;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0.6px, transparent 0.9px),
+        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.12) 0.5px, transparent 0.8px),
+        radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.16) 0.6px, transparent 0.9px),
+        radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.1) 0.5px, transparent 0.8px);
+      background-size: 18px 18px, 22px 22px, 26px 26px, 20px 20px;
+      mix-blend-mode: soft-light;
+    }
+
     a {
       color: inherit;
     }
@@ -310,46 +325,19 @@
       right: 24px;
       bottom: 18px;
       z-index: 10;
-      min-width: 150px;
       pointer-events: auto;
-    }
-
-    .progress-label {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 12px;
-      color: var(--muted);
-      font-family: "IBM Plex Mono", monospace;
-      font-size: 0.72rem;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .progress-track {
-      height: 2px;
-      border-radius: 999px;
-      background: rgba(216, 216, 216, 0.18);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      width: 0;
-      height: 100%;
-      border-radius: inherit;
-      background: var(--line);
     }
 
     .progress-nav {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
     }
 
     .progress-btn {
-      width: 26px;
-      height: 26px;
+      width: 34px;
+      height: 34px;
       border: 1px solid rgba(216, 216, 216, 0.16);
       border-radius: 999px;
       background: rgba(14, 14, 14, 0.54);
@@ -392,7 +380,6 @@
       .bottom-progress {
         right: 12px;
         bottom: 14px;
-        min-width: 128px;
       }
 
       .danmu {
@@ -440,27 +427,19 @@
     <p class="eyebrow" id="eyebrow">SophonMe / AIContext</p>
     <p class="copy-text" id="copyText"></p>
     <p class="copy-sub" id="copySub"></p>
+    <div class="install-box" id="installBox"><button class="copy-btn" id="copyBtn" type="button">Copy</button>pip install sophonme-aicontext
+aicontext install</div>
     <div class="copy-actions">
       <a class="btn" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
       <a class="btn" href="https://pypi.org/project/sophonme-aicontext/" target="_blank" rel="noreferrer">PyPI</a>
     </div>
-    <div class="install-box" id="installBox"><button class="copy-btn" id="copyBtn" type="button">Copy</button>pip install sophonme-aicontext
-aicontext install</div>
   </article>
   <div class="danmu-layer" id="danmuLayer"></div>
   <a class="top-link" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
   <div class="bottom-progress">
-    <div class="progress-label">
-      <span>Scroll</span>
-      <div class="progress-nav">
-        <span id="progressLabel">01 / 13</span>
-      </div>
-      <button class="progress-btn" id="prevSceneBtn" type="button" aria-label="Previous scene">&lt;</button>
-      <button class="progress-btn" id="nextSceneBtn" type="button" aria-label="Next scene">&gt;</button>
-      </div>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
+    <div class="progress-nav">
+      <button class="progress-btn" id="prevSceneBtn" type="button" aria-label="Previous scene">&#8593;</button>
+      <button class="progress-btn" id="nextSceneBtn" type="button" aria-label="Next scene">&#8595;</button>
     </div>
   </div>
 
@@ -488,8 +467,6 @@ aicontext install</div>
     const copyText = document.getElementById("copyText");
     const copySub = document.getElementById("copySub");
     const eyebrow = document.getElementById("eyebrow");
-    const progressLabel = document.getElementById("progressLabel");
-    const progressFill = document.getElementById("progressFill");
     const prevSceneBtn = document.getElementById("prevSceneBtn");
     const nextSceneBtn = document.getElementById("nextSceneBtn");
     const copyBtn = document.getElementById("copyBtn");
@@ -497,7 +474,6 @@ aicontext install</div>
     let copyEnterTimer = null;
     const danmuLayer = document.getElementById("danmuLayer");
     let lastDanmuKey = "";
-    let lastProgressText = "";
     let hasInitializedCopy = false;
 
     const stages = [
@@ -1246,7 +1222,7 @@ aicontext install</div>
       }
 
       if (keyA === "models" && keyB === "personal") {
-        const fade = 1 - t;
+        const fade = 1 - ease(clamp(t / 0.42, 0, 1));
         drawModelLabels(w, h, fade, t);
       }
 
@@ -1339,12 +1315,6 @@ aicontext install</div>
       const y = clamp(yRatio * window.innerHeight, 12, maxY);
       copy.style.width = desiredWidth + "px";
       copy.style.transform = "translate3d(" + x + "px," + y + "px,0)";
-      const progressText = String(base + 1).padStart(2, "0") + " / " + String(stages.length).padStart(2, "0");
-      if (progressText !== lastProgressText) {
-        progressLabel.textContent = progressText;
-        lastProgressText = progressText;
-      }
-      progressFill.style.width = (progress * 100) + "%";
       prevSceneBtn.disabled = base <= 0 && t < 0.5;
       nextSceneBtn.disabled = base >= stages.length - 1;
       hasInitializedCopy = true;
