@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SophonMe | AIContext</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+    :root {
+      --bg: #0e0e0e;
+      --ink: #e8e8e8;
+      --muted: #9a9a9a;
+      --line: #d8d8d8;
+      --panel: rgba(20, 20, 20, 0.72);
+      --panel-line: rgba(216, 216, 216, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Manrope", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04), transparent 42%),
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: auto, 44px 44px, 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 88%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .chrome {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      right: 24px;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid var(--panel-line);
+      border-radius: 999px;
+      background: rgba(14, 14, 14, 0.7);
+      backdrop-filter: blur(12px);
+      pointer-events: auto;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      display: block;
+    }
+
+    .brand-name {
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-divider {
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+    }
+
+    .brand-product {
+      font-size: 0.86rem;
+      letter-spacing: 0.04em;
+    }
+
+    .top-link {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--panel-line);
+      border-radius: 999px;
+      background: rgba(14, 14, 14, 0.7);
+      backdrop-filter: blur(12px);
+      pointer-events: auto;
+      color: var(--ink);
+      text-decoration: none;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .copy {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 9;
+      width: min(42rem, calc(100vw - 48px));
+      max-width: calc(100vw - 48px);
+      padding: 22px 24px;
+      border: 1px solid var(--panel-line);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      transform: translate3d(6vw, 64vh, 0);
+      transition: opacity 220ms ease;
+      overflow: visible;
+    }
+
+    .copy.kicker {
+      width: auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .copy-text {
+      margin: 0;
+      font-size: clamp(1.5rem, 3.4vw, 3.2rem);
+      line-height: 1.08;
+      letter-spacing: -0.05em;
+      max-width: 18ch;
+      white-space: pre-line;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+    }
+
+    .glow-word {
+      font-family: "DM Serif Display", serif;
+      font-weight: 400;
+      font-size: 1.04em;
+      letter-spacing: 0.01em;
+      color: #ffffff;
+      text-shadow:
+        0 0 10px rgba(255, 255, 255, 0.45),
+        0 0 24px rgba(255, 255, 255, 0.18);
+    }
+
+    .copy-sub {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.65;
+      max-width: 50ch;
+      overflow-wrap: anywhere;
+    }
+
+    .copy-actions {
+      display: none;
+      margin-top: 18px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .copy.install .copy-actions {
+      display: flex;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border: 1px solid var(--panel-line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .install-box {
+      position: relative;
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--panel-line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.88rem;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .copy.install .install-box {
+      display: block;
+    }
+
+    .danmu-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .danmu {
+      position: absolute;
+      max-width: min(34vw, 360px);
+      padding: 10px 14px;
+      border: 1px solid rgba(216, 216, 216, 0.1);
+      border-radius: 999px;
+      background: rgba(16, 16, 16, 0.46);
+      backdrop-filter: blur(10px);
+      color: rgba(232, 232, 232, 0.78);
+      font-size: 0.9rem;
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+      opacity: 0;
+      transform: translate3d(0, 18px, 0) scale(0.96);
+      transition: opacity 260ms ease, transform 260ms ease;
+      text-wrap: balance;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+    }
+
+    .danmu.visible {
+      opacity: 0.88;
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid var(--panel-line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      cursor: pointer;
+    }
+
+    .scroll-rail {
+      position: relative;
+      z-index: 1;
+    }
+
+    .step {
+      height: 100vh;
+    }
+
+    .bottom-progress {
+      position: fixed;
+      right: 24px;
+      bottom: 18px;
+      z-index: 10;
+      min-width: 150px;
+      pointer-events: none;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .progress-track {
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(216, 216, 216, 0.18);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--line);
+    }
+
+    @media (max-width: 800px) {
+      .chrome {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+      }
+
+      .copy {
+        width: min(calc(100vw - 24px), 38rem);
+        max-width: calc(100vw - 24px);
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .copy-text {
+        max-width: 18ch;
+      }
+
+      .bottom-progress {
+        right: 12px;
+        bottom: 14px;
+        min-width: 128px;
+      }
+
+      .danmu {
+        max-width: min(62vw, 300px);
+        font-size: 0.82rem;
+        padding: 9px 12px;
+      }
+
+      .top-link {
+        top: auto;
+        right: auto;
+        left: 12px;
+        bottom: 14px;
+      }
+
+    }
+  </style>
+</head>
+<body>
+  <div class="viewport">
+    <canvas id="scene" aria-label="SophonMe world context animation"></canvas>
+  </div>
+
+    <div class="chrome">
+      <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true">
+        <g stroke="#d8d8d8" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M28 60 A18 18 0 1 1 28 59.9"/>
+          <g transform="rotate(120 50 50)">
+            <path d="M28 60 A18 18 0 1 1 28 59.9"/>
+          </g>
+          <g transform="rotate(240 50 50)">
+            <path d="M28 60 A18 18 0 1 1 28 59.9"/>
+          </g>
+        </g>
+      </svg>
+      <div class="brand-name">SophonMe</div>
+      <div class="brand-divider">/</div>
+      <div class="brand-product glow-word">AIContext</div>
+      </div>
+    <div></div>
+  </div>
+
+  <article class="copy" id="copy">
+    <p class="eyebrow" id="eyebrow">SophonMe / AIContext</p>
+    <p class="copy-text" id="copyText">Start with scattered pieces of your context.</p>
+    <p class="copy-sub" id="copySub"></p>
+    <div class="copy-actions">
+      <a class="btn" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
+      <a class="btn" href="https://pypi.org/project/sophonme-aicontext/" target="_blank" rel="noreferrer">PyPI</a>
+    </div>
+    <div class="install-box" id="installBox"><button class="copy-btn" id="copyBtn" type="button">Copy</button>pip install sophonme-aicontext
+aicontext install</div>
+  </article>
+  <div class="danmu-layer" id="danmuLayer"></div>
+  <a class="top-link" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
+  <div class="bottom-progress">
+    <div class="progress-label">
+      <span>Scroll</span>
+      <span id="progressLabel">01 / 13</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="scroll-rail" id="story">
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+    <section class="step"></section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("scene");
+    const ctx = canvas.getContext("2d");
+    const story = document.getElementById("story");
+    const copy = document.getElementById("copy");
+    const copyText = document.getElementById("copyText");
+    const copySub = document.getElementById("copySub");
+    const eyebrow = document.getElementById("eyebrow");
+    const progressLabel = document.getElementById("progressLabel");
+    const progressFill = document.getElementById("progressFill");
+    const copyBtn = document.getElementById("copyBtn");
+    const danmuLayer = document.getElementById("danmuLayer");
+
+    const stages = [
+      {
+        key: "scatter",
+        text: "Start with scattered pieces of your context.",
+        x: 0.07,
+        y: 0.64,
+        w: 0.32
+      },
+      {
+        key: "trefoil",
+        text: "Bring context together.",
+        x: 0.67,
+        y: 0.22,
+        w: 0.24
+      },
+      {
+        key: "hspan",
+        text: "Organize it across time.",
+        x: 0.06,
+        y: 0.13,
+        w: 0.28
+      },
+      {
+        key: "vspan",
+        text: "Add depth through different context sources.",
+        x: 0.66,
+        y: 0.4,
+        w: 0.3
+      },
+      {
+        key: "tiles",
+        text: "Tile into a living picture.",
+        x: 0.08,
+        y: 0.72,
+        w: 0.34
+      },
+      {
+        key: "pipe",
+        text: "Shape it into a structure you can look into.",
+        x: 0.62,
+        y: 0.16,
+        w: 0.26
+      },
+      {
+        key: "earth",
+        text: "Expand it into AIContext: a living map of your interactions across digital and real worlds.",
+        x: 0.05,
+        y: 0.18,
+        w: 0.34
+      },
+      {
+        key: "models",
+        text: "Connect that context to models like Claude, ChatGPT, Gemini, and more.",
+        x: 0.58,
+        y: 0.58,
+        w: 0.38
+      },
+      {
+        key: "personal",
+        text: "AIContext enables a personalized context engine for AI agents.",
+        x: 0.08,
+        y: 0.66,
+        w: 0.38
+      },
+      {
+        key: "rings",
+        text: "AIContext creates space for self-reflection, therapy, and calm judgment.",
+        x: 0.61,
+        y: 0.18,
+        w: 0.28
+      },
+      {
+        key: "care",
+        text: "AIContext brings you closer to the people you care about, helping you understand them better.",
+        x: 0.08,
+        y: 0.18,
+        w: 0.28
+      },
+      {
+        key: "secure",
+        text: "AIContext keeps your context secure: local-first and P2P.",
+        x: 0.63,
+        y: 0.64,
+        w: 0.38
+      },
+      {
+        key: "install",
+        text: "Bring AIContext into your daily life.",
+        sub: "Thirty-second setup.",
+        x: 0.58,
+        y: 0.18,
+        w: 0.3,
+        install: true
+      }
+    ];
+
+    const TOTAL_SHAPES = 180;
+    const shapes = Array.from({ length: TOTAL_SHAPES }, (_, index) => ({
+      index,
+      a: rand(index * 1.37 + 0.2),
+      b: rand(index * 2.91 + 1.7)
+    }));
+
+    const danmuSpecs = {
+      personal: [
+        { text: "Give me some suggestions about what I should do this weekend.", x: 0.5, y: 0.16, delay: 0 },
+        { text: "Draw something that I will like.", x: 0.73, y: 0.26, delay: 80 },
+        { text: "What do I want to buy the most?", x: 0.2, y: 0.28, delay: 140 },
+        { text: "Recommend a book, video, or podcast for me.", x: 0.7, y: 0.79, delay: 200 },
+        { text: "What should I watch next?", x: 0.18, y: 0.77, delay: 260 }
+      ],
+      rings: [
+        { text: "What is the biggest miss in my daily life that I may not even be aware of?", x: 0.1, y: 0.5, delay: 0 },
+        { text: "What do you think has been bothering me lately?", x: 0.58, y: 0.64, delay: 80 },
+        { text: "Analyze my daily-life and work efficiency. Give me actionable suggestions.", x: 0.08, y: 0.64, delay: 140 },
+        { text: "Help me make the best Kalshi choice.", x: 0.08, y: 0.76, delay: 200 },
+        { text: "Tell my fortune.", x: 0.62, y: 0.72, delay: 260 }
+      ],
+      care: [
+        { text: "Why does my daughter feel anxious recently?", x: 0.56, y: 0.48, delay: 0 },
+        { text: "What is the best gift for my son's upcoming birthday?", x: 0.58, y: 0.62, delay: 80 },
+        { text: "Plan a trip that all my family will be happy with.", x: 0.1, y: 0.62, delay: 140 },
+        { text: "Help me chase my crush.", x: 0.46, y: 0.84, delay: 200 }
+      ]
+    };
+
+    const mobileDanmuLayout = {
+      personal: { x: 0.08, top: 0.18, gap: 0.09, stagger: 0.03 },
+      rings: { x: 0.08, top: 0.48, gap: 0.085, stagger: 0.02 },
+      care: { x: 0.08, top: 0.5, gap: 0.095, stagger: 0.02 }
+    };
+
+    const danmuNodes = {};
+    Object.entries(danmuSpecs).forEach(([key, items]) => {
+      danmuNodes[key] = items.map((item) => {
+        const node = document.createElement("div");
+        node.className = "danmu";
+        node.textContent = item.text;
+        node.style.transitionDelay = item.delay + "ms";
+        danmuLayer.appendChild(node);
+        return node;
+      });
+    });
+
+    function rand(value) {
+      const x = Math.sin(value * 43758.5453123) * 10000;
+      return x - Math.floor(x);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function ease(t) {
+      return t * t * (3 - 2 * t);
+    }
+
+    function rotate(x, y, angle) {
+      return {
+        x: x * Math.cos(angle) - y * Math.sin(angle),
+        y: x * Math.sin(angle) + y * Math.cos(angle)
+      };
+    }
+
+    function getProgress() {
+      const total = story.offsetHeight - window.innerHeight;
+      if (total <= 0) {
+        return 0;
+      }
+      return clamp(window.scrollY / total, 0, 1);
+    }
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(window.innerWidth * dpr);
+      canvas.height = Math.round(window.innerHeight * dpr);
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      layoutDanmu();
+      render();
+    }
+
+    function layoutDanmu() {
+      const isMobile = window.innerWidth <= 800;
+      Object.entries(danmuSpecs).forEach(([key, items]) => {
+        danmuNodes[key].forEach((node, index) => {
+          if (isMobile && mobileDanmuLayout[key]) {
+            const layout = mobileDanmuLayout[key];
+            const x = layout.x + (index % 2) * layout.stagger;
+            const y = layout.top + index * layout.gap;
+            node.style.left = (x * 100) + "%";
+            node.style.top = (y * 100) + "%";
+          } else {
+            node.style.left = (items[index].x * 100) + "%";
+            node.style.top = (items[index].y * 100) + "%";
+          }
+        });
+      });
+    }
+
+    function render() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const progress = getProgress();
+      const stageProgress = progress * (stages.length - 1);
+      const base = Math.floor(stageProgress);
+      const next = Math.min(base + 1, stages.length - 1);
+      const t = ease(stageProgress - base);
+
+      ctx.clearRect(0, 0, w, h);
+      drawBackground(w, h, progress);
+
+      const stateA = getStageState(stages[base].key, w, h);
+      const stateB = getStageState(stages[next].key, w, h);
+      const mixed = mixStates(stateA, stateB, t, stages[base].key, stages[next].key, w, h);
+
+      drawScene(mixed, stages[base].key, stages[next].key, t, w, h);
+      updateCopy(base, next, t, progress);
+      updateDanmu(base, next, t);
+    }
+
+    function drawBackground(w, h, progress) {
+      const glow = ctx.createRadialGradient(w * 0.5, h * 0.5, 0, w * 0.5, h * 0.5, Math.max(w, h) * 0.44);
+      glow.addColorStop(0, "rgba(255,255,255,0.05)");
+      glow.addColorStop(0.55, "rgba(255,255,255,0.015)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalAlpha = 0.12 + progress * 0.08;
+      ctx.strokeStyle = "rgba(216,216,216,0.06)";
+      ctx.beginPath();
+      ctx.arc(w * 0.5, h * 0.5, Math.min(w, h) * 0.34, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function getStageState(key, w, h) {
+      switch (key) {
+        case "scatter":
+          return scatterState(w, h);
+        case "trefoil":
+          return trefoilState(w, h, 1);
+        case "hspan":
+          return horizontalState(w, h);
+        case "vspan":
+          return verticalState(w, h);
+        case "tiles":
+          return tileState(w, h);
+        case "pipe":
+          return pipeState(w, h);
+        case "earth":
+          return earthState(w, h);
+        case "models":
+          return modelsState(w, h);
+        case "personal":
+          return personalState(w, h);
+        case "rings":
+          return ringsState(w, h);
+        case "care":
+          return careState(w, h);
+        case "secure":
+          return secureState(w, h);
+        case "install":
+          return installState(w, h);
+        default:
+          return scatterState(w, h);
+      }
+    }
+
+    function baseTrefoilCenters(scale) {
+      const centers = [];
+      const base = { x: -22, y: -8 };
+      [0, 120, 240].forEach((deg) => {
+        const r = rotate(base.x, base.y, deg * Math.PI / 180);
+        centers.push({
+          x: r.x * scale,
+          y: r.y * scale
+        });
+      });
+      return centers;
+    }
+
+    function scatterState(w, h) {
+      const centers = [
+        { x: w * 0.26, y: h * 0.35 },
+        { x: w * 0.72, y: h * 0.3 },
+        { x: w * 0.54, y: h * 0.72 }
+      ];
+      return shapes.map((shape) => {
+        if (shape.index >= 3) {
+          return hidden();
+        }
+        const center = centers[shape.index];
+        return {
+          x: center.x,
+          y: center.y,
+          r: 6,
+          alpha: 1,
+          line: 0,
+          filled: true
+        };
+      });
+    }
+
+    function trefoilState(w, h, radiusScale) {
+      const scale = Math.min(w, h) / 100 * radiusScale;
+      const centers = baseTrefoilCenters(scale);
+      const originX = w * 0.5;
+      const originY = h * 0.48;
+      return shapes.map((shape) => {
+        if (shape.index >= 3) {
+          return hidden();
+        }
+        const c = centers[shape.index];
+        return {
+          x: originX + c.x,
+          y: originY + c.y,
+          r: 18 * scale,
+          alpha: 1,
+          line: Math.max(2, scale * 1.8),
+          filled: false
+        };
+      });
+    }
+
+    function horizontalState(w, h) {
+      return shapes.map((shape) => {
+        if (shape.index >= 3) {
+          return hidden();
+        }
+        const x = [0.24, 0.5, 0.76][shape.index] * w;
+        return {
+          x,
+          y: h * 0.5,
+          r: Math.min(w, h) * 0.16,
+          alpha: 1,
+          line: 2.2,
+          filled: false
+        };
+      });
+    }
+
+    function verticalState(w, h) {
+      return shapes.map((shape) => {
+        if (shape.index >= 3) {
+          return hidden();
+        }
+        const y = [0.24, 0.5, 0.76][shape.index] * h;
+        return {
+          x: w * 0.5,
+          y,
+          r: Math.min(w, h) * 0.16,
+          alpha: 1,
+          line: 2.2,
+          filled: false
+        };
+      });
+    }
+
+    function tileState(w, h) {
+      const cols = 12;
+      const rows = 12;
+      const spacing = Math.min(w, h) * 0.073;
+      const radius = spacing * 0.82;
+      const startX = w * 0.18;
+      const startY = h * 0.14;
+      return shapes.map((shape) => {
+        if (shape.index >= cols * rows) {
+          return hidden();
+        }
+        const col = shape.index % cols;
+        const row = Math.floor(shape.index / cols);
+        const x = startX + col * spacing + (row % 2 ? spacing * 0.5 : 0);
+        const y = startY + row * spacing * 0.87;
+        return {
+          x,
+          y,
+          r: radius,
+          alpha: 0.92,
+          line: 1.7,
+          filled: false
+        };
+      });
+    }
+
+    function pipeState(w, h) {
+      const rings = 12;
+      const perRing = 12;
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      return shapes.map((shape) => {
+        if (shape.index >= rings * perRing) {
+          return hidden();
+        }
+        const ring = Math.floor(shape.index / perRing);
+        const pos = shape.index % perRing;
+        const depth = ring / (rings - 1);
+        const angle = pos / perRing * Math.PI * 2;
+        const radius = lerp(Math.min(w, h) * 0.28, Math.min(w, h) * 0.08, depth);
+        const scale = lerp(1, 0.42, depth);
+        return {
+          x: cx + Math.cos(angle) * radius,
+          y: cy + Math.sin(angle) * radius * 0.62,
+          r: Math.max(3, Math.min(w, h) * 0.025 * scale),
+          alpha: 0.82,
+          line: 1.5,
+          filled: false
+        };
+      });
+    }
+
+    function earthState(w, h) {
+      return globeState(w, h, 0);
+    }
+
+    function globeState(w, h, spin) {
+      const latCount = 12;
+      const lonCount = 12;
+      const radius = Math.min(w, h) * 0.29;
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const axialTilt = 23.5 * Math.PI / 180;
+      return shapes.map((shape) => {
+        if (shape.index >= latCount * lonCount) {
+          return hidden();
+        }
+        const latI = Math.floor(shape.index / lonCount);
+        const lonI = shape.index % lonCount;
+        const lat = lerp(-Math.PI / 2, Math.PI / 2, latI / (latCount - 1));
+        const lon = lonI / lonCount * Math.PI * 2 + spin;
+        const px = Math.cos(lat) * Math.cos(lon);
+        const py = Math.sin(lat);
+        const pz = Math.cos(lat) * Math.sin(lon);
+        const tiltedY = py * Math.cos(axialTilt) - px * Math.sin(axialTilt);
+        const tiltedX = py * Math.sin(axialTilt) + px * Math.cos(axialTilt);
+        const tiltedZ = pz;
+        const perspective = 0.55 + (tiltedZ + 1) * 0.23;
+        return {
+          x: cx + tiltedX * radius,
+          y: cy + tiltedY * radius,
+          r: Math.max(3, radius * 0.07 * perspective),
+          alpha: 0.48 + (tiltedZ + 1) * 0.22,
+          line: 1.4,
+          filled: false
+        };
+      });
+    }
+
+    function modelsState(w, h) {
+      const base = globeState(w, h, Math.PI / 7);
+      return base.map((item, index) => {
+        if (index >= 144) {
+          return hidden();
+        }
+        return item;
+      });
+    }
+
+    function personalState(w, h) {
+      const circles = [
+        { x: w * 0.33, y: h * 0.42, r: Math.min(w, h) * 0.06 },
+        { x: w * 0.5, y: h * 0.34, r: Math.min(w, h) * 0.042 },
+        { x: w * 0.68, y: h * 0.45, r: Math.min(w, h) * 0.072 },
+        { x: w * 0.26, y: h * 0.58, r: Math.min(w, h) * 0.05 },
+        { x: w * 0.44, y: h * 0.55, r: Math.min(w, h) * 0.033 },
+        { x: w * 0.59, y: h * 0.61, r: Math.min(w, h) * 0.058 },
+        { x: w * 0.76, y: h * 0.58, r: Math.min(w, h) * 0.04 },
+        { x: w * 0.39, y: h * 0.71, r: Math.min(w, h) * 0.07 },
+        { x: w * 0.61, y: h * 0.74, r: Math.min(w, h) * 0.048 }
+      ];
+      return shapes.map((shape) => {
+        if (shape.index >= 9) {
+          return hidden();
+        }
+        const c = circles[shape.index];
+        return {
+          x: c.x,
+          y: c.y,
+          r: c.r,
+          alpha: 0.94,
+          line: 1.6,
+          filled: true
+        };
+      });
+    }
+
+    function centerDotState(w, h) {
+      return shapes.map((shape) => {
+        if (shape.index >= 9) {
+          return hidden();
+        }
+        return {
+          x: w * 0.5,
+          y: h * 0.5,
+          r: Math.min(w, h) * 0.012,
+          alpha: 1,
+          line: 0,
+          filled: true
+        };
+      });
+    }
+
+    function ringsState(w, h) {
+      return shapes.map((shape) => {
+        if (shape.index >= 9) {
+          return hidden();
+        }
+        const ring = shape.index;
+        return {
+          x: w * 0.5,
+          y: h * 0.5,
+          r: Math.min(w, h) * (0.05 + ring * 0.038),
+          alpha: 0.92 - ring * 0.07,
+          line: 1.7,
+          filled: false
+        };
+      });
+    }
+
+    function careState(w, h) {
+      const groups = [
+        { x: w * 0.34, y: h * 0.5, r: Math.min(w, h) * 0.19 },
+        { x: w * 0.5, y: h * 0.5, r: Math.min(w, h) * 0.12 },
+        { x: w * 0.66, y: h * 0.5, r: Math.min(w, h) * 0.19 }
+      ];
+      return shapes.map((shape) => {
+        if (shape.index >= 3) {
+          return hidden();
+        }
+        const g = groups[shape.index];
+        return {
+          x: g.x,
+          y: g.y,
+          r: g.r,
+          alpha: 1,
+          line: 2,
+          filled: false
+        };
+      });
+    }
+
+    function secureState(w, h) {
+      const cols = 11;
+      const rows = 10;
+      const spacing = Math.min(w, h) * 0.07;
+      const startX = w * 0.21;
+      const startY = h * 0.17;
+      return shapes.map((shape) => {
+        if (shape.index >= cols * rows) {
+          return hidden();
+        }
+        const col = shape.index % cols;
+        const row = Math.floor(shape.index / cols);
+        return {
+          x: startX + col * spacing,
+          y: startY + row * spacing,
+          r: spacing * 0.31,
+          alpha: 0.84,
+          line: 1.5,
+          filled: false
+        };
+      });
+    }
+
+    function installState(w, h) {
+      const state = trefoilState(w, h, 1.25);
+      return state.map((item, index) => {
+        if (index >= 3) {
+          return hidden();
+        }
+        return {
+          x: item.x - w * 0.18,
+          y: item.y + h * 0.02,
+          r: item.r,
+          alpha: 1,
+          line: item.line,
+          filled: false
+        };
+      });
+    }
+
+    function hidden() {
+      return {
+        x: 0,
+        y: 0,
+        r: 0,
+        alpha: 0,
+        line: 0,
+        filled: false
+      };
+    }
+
+    function mixStates(a, b, t, keyA, keyB, w, h) {
+      if (keyA === "models" && keyB === "personal") {
+        const center = centerDotState(w, h);
+        const reduced = a.map((item, index) => index < 9 ? item : hidden());
+        if (t < 0.45) {
+          const local = ease(t / 0.45);
+          return reduced.map((item, index) => ({
+            x: lerp(item.x, center[index].x, local),
+            y: lerp(item.y, center[index].y, local),
+            r: lerp(item.r, center[index].r, local),
+            alpha: lerp(item.alpha, center[index].alpha, local),
+            line: lerp(item.line, center[index].line, local),
+            filled: true
+          }));
+        }
+
+        const local = ease((t - 0.45) / 0.55);
+        return center.map((item, index) => ({
+          x: lerp(item.x, b[index].x, local),
+          y: lerp(item.y, b[index].y, local),
+          r: lerp(item.r, b[index].r, local),
+          alpha: lerp(item.alpha, b[index].alpha, local),
+          line: lerp(item.line, b[index].line, local),
+          filled: true
+        }));
+      }
+
+      return a.map((item, index) => ({
+        x: lerp(item.x, b[index].x, t),
+        y: lerp(item.y, b[index].y, t),
+        r: lerp(item.r, b[index].r, t),
+        alpha: lerp(item.alpha, b[index].alpha, t),
+        line: lerp(item.line, b[index].line, t),
+        filled: t < 0.5 ? item.filled : b[index].filled
+      }));
+    }
+
+    function drawScene(items, keyA, keyB, t, w, h) {
+      drawSupplementary(keyA, keyB, t, w, h);
+      items.forEach((item) => drawCircle(item));
+    }
+
+    function drawCircle(item) {
+      if (item.alpha <= 0.001 || item.r <= 0.001) {
+        return;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = item.alpha;
+      ctx.strokeStyle = "#d8d8d8";
+      ctx.fillStyle = "#d8d8d8";
+
+      if (item.filled) {
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.lineWidth = Math.max(1, item.line);
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawSupplementary(keyA, keyB, t, w, h) {
+      const key = t < 0.5 ? keyA : keyB;
+      ctx.save();
+      ctx.strokeStyle = "rgba(216,216,216,0.2)";
+      ctx.fillStyle = "#d8d8d8";
+      ctx.lineWidth = 1.2;
+
+      if (key === "models" && !(keyA === "models" && keyB === "personal")) {
+        drawModelLabels(w, h, 1, 0);
+      }
+
+      if (keyA === "models" && keyB === "personal") {
+        const fade = 1 - t;
+        drawModelLabels(w, h, fade, t);
+      }
+
+      if (key === "secure") {
+        drawSecurityFrame(w, h);
+      }
+
+      ctx.restore();
+    }
+
+    function drawModelLabels(w, h, alpha, retract) {
+      const labels = [
+        { text: "Claude", x: w * 0.18, y: h * 0.34 },
+        { text: "ChatGPT", x: w * 0.5, y: h * 0.12 },
+        { text: "Gemini", x: w * 0.82, y: h * 0.34 }
+      ];
+      const centerX = w * 0.5;
+      const centerY = h * 0.5;
+      const amount = clamp(retract || 0, 0, 1);
+
+      ctx.save();
+      ctx.globalAlpha = clamp(alpha, 0, 1);
+      ctx.font = "500 14px IBM Plex Mono";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      labels.forEach((label) => {
+        const endX = lerp(label.x, centerX, amount);
+        const endY = lerp(label.y, centerY, amount);
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        ctx.fillText(label.text, endX, endY);
+      });
+      ctx.restore();
+    }
+
+
+    function drawSecurityFrame(w, h) {
+      const x = w * 0.18;
+      const y = h * 0.14;
+      const width = w * 0.64;
+      const height = h * 0.7;
+      roundRect(x, y, width, height, 34);
+      ctx.stroke();
+    }
+
+    function roundRect(x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function updateCopy(base, next, t, progress) {
+      const source = t < 0.5 ? stages[base] : stages[next];
+      eyebrow.textContent = "SophonMe / AIContext";
+      copyText.innerHTML = highlightAIContext(source.text);
+      copySub.innerHTML = highlightAIContext(source.sub || "");
+      copy.classList.toggle("install", Boolean(source.install));
+      const desiredWidth = Math.min(window.innerWidth - 24, Math.max(320, source.w * window.innerWidth));
+      const maxX = Math.max(12, window.innerWidth - desiredWidth - 12);
+      const x = clamp(source.x * window.innerWidth, 12, maxX);
+      const approxHeight = source.install ? 250 : source.sub ? 220 : 160;
+      const maxY = Math.max(12, window.innerHeight - approxHeight - 12);
+      const y = clamp(source.y * window.innerHeight, 12, maxY);
+      copy.style.width = desiredWidth + "px";
+      copy.style.transform = "translate3d(" + x + "px," + y + "px,0)";
+      progressLabel.textContent = String(base + 1).padStart(2, "0") + " / " + String(stages.length).padStart(2, "0");
+      progressFill.style.width = (progress * 100) + "%";
+    }
+
+    function updateDanmu(base, next, t) {
+      const sourceKey = t < 0.5 ? stages[base].key : stages[next].key;
+      Object.entries(danmuNodes).forEach(([key, nodes]) => {
+        const active = key === sourceKey;
+        nodes.forEach((node) => {
+          node.classList.toggle("visible", active);
+        });
+      });
+    }
+
+    function highlightAIContext(text) {
+      return text.replaceAll("AIContext", '<span class="glow-word">AIContext</span>');
+    }
+
+    let ticking = false;
+    function onScroll() {
+      if (ticking) {
+        return;
+      }
+      ticking = true;
+      requestAnimationFrame(() => {
+        render();
+        ticking = false;
+      });
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("load", resize);
+
+    copyBtn.addEventListener("click", async () => {
+      const command = "pip install sophonme-aicontext\naicontext install";
+      try {
+        await navigator.clipboard.writeText(command);
+        copyBtn.textContent = "Copied";
+        window.setTimeout(() => {
+          copyBtn.textContent = "Copy";
+        }, 1400);
+      } catch (error) {
+        copyBtn.textContent = "Failed";
+        window.setTimeout(() => {
+          copyBtn.textContent = "Copy";
+        }, 1400);
+      }
+    });
+  </script>
+</body>
+</html>
