@@ -147,12 +147,19 @@
       backdrop-filter: blur(14px);
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
       transform: translate3d(6vw, 64vh, 0);
-      transition: opacity 220ms ease;
+      opacity: 1;
+      transition:
+        opacity 340ms cubic-bezier(0.22, 1, 0.36, 1),
+        transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
       overflow: visible;
     }
 
     .copy.kicker {
       width: auto;
+    }
+
+    .copy.card-entering {
+      opacity: 0.78;
     }
 
     .eyebrow {
@@ -301,12 +308,13 @@
       bottom: 18px;
       z-index: 10;
       min-width: 150px;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .progress-label {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
+      align-items: center;
       gap: 12px;
       color: var(--muted);
       font-family: "IBM Plex Mono", monospace;
@@ -328,6 +336,36 @@
       height: 100%;
       border-radius: inherit;
       background: var(--line);
+    }
+
+    .progress-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .progress-btn {
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(216, 216, 216, 0.16);
+      border-radius: 999px;
+      background: rgba(14, 14, 14, 0.54);
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, opacity 160ms ease;
+    }
+
+    .progress-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(216, 216, 216, 0.3);
+    }
+
+    .progress-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
     }
 
     @media (max-width: 800px) {
@@ -411,7 +449,12 @@ aicontext install</div>
   <div class="bottom-progress">
     <div class="progress-label">
       <span>Scroll</span>
-      <span id="progressLabel">01 / 13</span>
+      <div class="progress-nav">
+        <span id="progressLabel">01 / 13</span>
+      </div>
+      <button class="progress-btn" id="prevSceneBtn" type="button" aria-label="Previous scene">&lt;</button>
+      <button class="progress-btn" id="nextSceneBtn" type="button" aria-label="Next scene">&gt;</button>
+      </div>
     </div>
     <div class="progress-track">
       <div class="progress-fill" id="progressFill"></div>
@@ -444,7 +487,11 @@ aicontext install</div>
     const eyebrow = document.getElementById("eyebrow");
     const progressLabel = document.getElementById("progressLabel");
     const progressFill = document.getElementById("progressFill");
+    const prevSceneBtn = document.getElementById("prevSceneBtn");
+    const nextSceneBtn = document.getElementById("nextSceneBtn");
     const copyBtn = document.getElementById("copyBtn");
+    let activeCopyKey = "";
+    let copyEnterTimer = null;
     const danmuLayer = document.getElementById("danmuLayer");
 
     const stages = [
@@ -621,6 +668,35 @@ aicontext install</div>
         return 0;
       }
       return clamp(window.scrollY / total, 0, 1);
+    }
+
+    function scrollToStage(index) {
+      const stageIndex = clamp(index, 0, stages.length - 1);
+      const total = story.offsetHeight - window.innerHeight;
+      const targetY = total <= 0 ? 0 : (stageIndex / (stages.length - 1)) * total;
+      animateScrollTo(targetY, 720);
+    }
+
+    function animateScrollTo(targetY, duration) {
+      const startY = window.scrollY;
+      const delta = targetY - startY;
+      const startTime = performance.now();
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function frame(now) {
+        const elapsed = now - startTime;
+        const progress = clamp(elapsed / duration, 0, 1);
+        const eased = easeInOutCubic(progress);
+        window.scrollTo(0, startY + delta * eased);
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        }
+      }
+
+      requestAnimationFrame(frame);
     }
 
     function resize() {
@@ -903,13 +979,7 @@ aicontext install</div>
     }
 
     function modelsState(w, h) {
-      const base = globeState(w, h, Math.PI / 7);
-      return base.map((item, index) => {
-        if (index >= 144) {
-          return hidden();
-        }
-        return item;
-      });
+      return centerDotState(w, h);
     }
 
     function personalState(w, h) {
@@ -954,6 +1024,17 @@ aicontext install</div>
           filled: true
         };
       });
+    }
+
+    function centerDotCollapseState(w, h) {
+      return shapes.map(() => ({
+        x: w * 0.5,
+        y: h * 0.5,
+        r: Math.min(w, h) * 0.012,
+        alpha: 1,
+        line: 0,
+        filled: true
+      }));
     }
 
     function ringsState(w, h) {
@@ -1047,6 +1128,25 @@ aicontext install</div>
     }
 
     function mixStates(a, b, t, keyA, keyB, w, h) {
+      if (keyA === "earth" && keyB === "models") {
+        const collapse = centerDotCollapseState(w, h);
+        const local = ease(t);
+        return a.map((item, index) => {
+          if (item.alpha <= 0.001 || item.r <= 0.001) {
+            return hidden();
+          }
+          const keepVisible = index < 9 ? 1 : 1 - ease(clamp((t - 0.72) / 0.28, 0, 1));
+          return {
+            x: lerp(item.x, collapse[index].x, local),
+            y: lerp(item.y, collapse[index].y, local),
+            r: lerp(item.r, collapse[index].r, local),
+            alpha: lerp(item.alpha, collapse[index].alpha, local) * keepVisible,
+            line: lerp(item.line, collapse[index].line, local),
+            filled: local < 0.92 ? item.filled : true
+          };
+        });
+      }
+
       if (keyA === "models" && keyB === "personal") {
         const center = centerDotState(w, h);
         const reduced = a.map((item, index) => index < 9 ? item : hidden());
@@ -1118,8 +1218,13 @@ aicontext install</div>
       ctx.fillStyle = "#d8d8d8";
       ctx.lineWidth = 1.2;
 
-      if (key === "models" && !(keyA === "models" && keyB === "personal")) {
+      if (key === "models" && keyA !== "earth" && !(keyA === "models" && keyB === "personal")) {
         drawModelLabels(w, h, 1, 0);
+      }
+
+      if (keyA === "earth" && keyB === "models") {
+        const engage = clamp((t - 0.12) / 0.5, 0, 1);
+        drawModelLabels(w, h, engage, 0);
       }
 
       if (keyA === "models" && keyB === "personal") {
@@ -1188,6 +1293,16 @@ aicontext install</div>
 
     function updateCopy(base, next, t, progress) {
       const source = t < 0.5 ? stages[base] : stages[next];
+      if (activeCopyKey !== source.key) {
+        activeCopyKey = source.key;
+        copy.classList.add("card-entering");
+        if (copyEnterTimer) {
+          window.clearTimeout(copyEnterTimer);
+        }
+        copyEnterTimer = window.setTimeout(() => {
+          copy.classList.remove("card-entering");
+        }, 320);
+      }
       eyebrow.textContent = "SophonMe / AIContext";
       copyText.innerHTML = highlightAIContext(source.text);
       copySub.innerHTML = highlightAIContext(source.sub || "");
@@ -1202,6 +1317,8 @@ aicontext install</div>
       copy.style.transform = "translate3d(" + x + "px," + y + "px,0)";
       progressLabel.textContent = String(base + 1).padStart(2, "0") + " / " + String(stages.length).padStart(2, "0");
       progressFill.style.width = (progress * 100) + "%";
+      prevSceneBtn.disabled = base <= 0 && t < 0.5;
+      nextSceneBtn.disabled = base >= stages.length - 1;
     }
 
     function updateDanmu(base, next, t) {
@@ -1248,6 +1365,20 @@ aicontext install</div>
           copyBtn.textContent = "Copy";
         }, 1400);
       }
+    });
+
+    prevSceneBtn.addEventListener("click", () => {
+      const progress = getProgress();
+      const stageProgress = progress * (stages.length - 1);
+      const currentStage = Math.round(stageProgress);
+      scrollToStage(currentStage - 1);
+    });
+
+    nextSceneBtn.addEventListener("click", () => {
+      const progress = getProgress();
+      const stageProgress = progress * (stages.length - 1);
+      const currentStage = Math.round(stageProgress);
+      scrollToStage(currentStage + 1);
     });
   </script>
 </body>
