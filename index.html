@@ -30,6 +30,9 @@
       background: var(--bg);
       color: var(--ink);
       font-family: "Manrope", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
       min-height: 100vh;
       overflow-x: hidden;
     }
@@ -549,7 +552,7 @@ aicontext install</div>
       },
       {
         key: "models",
-        text: "Connect that context to models like Claude, ChatGPT, Gemini, and more.",
+        text: "Connect that context to agents like Claude Code, Codex, OpenClaw, and more.",
         x: 0.58,
         y: 0.58,
         w: 0.38
@@ -955,7 +958,7 @@ aicontext install</div>
     }
 
     function earthToModelsState(w, h, t) {
-      const spin = (-Math.PI / 10) * ease(clamp(t, 0, 1));
+      const spin = (-Math.PI / 6) * ease(clamp(t, 0, 1));
       return globeState(w, h, spin);
     }
 
@@ -1256,9 +1259,9 @@ aicontext install</div>
 
     function drawModelLabels(w, h, alpha, retract) {
       const labels = [
-        { text: "Claude", x: w * 0.18, y: h * 0.34 },
-        { text: "ChatGPT", x: w * 0.5, y: h * 0.12 },
-        { text: "Gemini", x: w * 0.82, y: h * 0.34 }
+        { text: "Claude Code", x: w * 0.18, y: h * 0.34 },
+        { text: "Codex", x: w * 0.5, y: h * 0.12 },
+        { text: "OpenClaw", x: w * 0.82, y: h * 0.34 }
       ];
       const centerX = w * 0.5;
       const centerY = h * 0.5;
