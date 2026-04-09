@@ -435,7 +435,7 @@
 
   <article class="copy" id="copy">
     <p class="eyebrow" id="eyebrow">SophonMe / AIContext</p>
-    <p class="copy-text" id="copyText">Start with scattered pieces of your context.</p>
+    <p class="copy-text" id="copyText"></p>
     <p class="copy-sub" id="copySub"></p>
     <div class="copy-actions">
       <a class="btn" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
@@ -495,6 +495,7 @@ aicontext install</div>
     const danmuLayer = document.getElementById("danmuLayer");
     let lastDanmuKey = "";
     let lastProgressText = "";
+    let hasInitializedCopy = false;
 
     const stages = [
       {
@@ -1310,13 +1311,15 @@ aicontext install</div>
       const isMobile = window.innerWidth <= 800;
       if (activeCopyKey !== source.key) {
         activeCopyKey = source.key;
-        copy.classList.add("card-entering");
-        if (copyEnterTimer) {
-          window.clearTimeout(copyEnterTimer);
+        if (hasInitializedCopy) {
+          copy.classList.add("card-entering");
+          if (copyEnterTimer) {
+            window.clearTimeout(copyEnterTimer);
+          }
+          copyEnterTimer = window.setTimeout(() => {
+            copy.classList.remove("card-entering");
+          }, 320);
         }
-        copyEnterTimer = window.setTimeout(() => {
-          copy.classList.remove("card-entering");
-        }, 320);
       }
       eyebrow.textContent = "SophonMe / AIContext";
       copyText.innerHTML = highlightAIContext(source.text);
@@ -1341,6 +1344,7 @@ aicontext install</div>
       progressFill.style.width = (progress * 100) + "%";
       prevSceneBtn.disabled = base <= 0 && t < 0.5;
       nextSceneBtn.disabled = base >= stages.length - 1;
+      hasInitializedCopy = true;
     }
 
     function updateDanmu(base, next, t) {
