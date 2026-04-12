@@ -1036,18 +1036,18 @@ aicontext install</div>
 
     const danmuSpecs = {
       personal: [
-        { text: "Give me some suggestions about what I should do this weekend.", x: 0.5, y: 0.16, delay: 0 },
+        { text: "Check my history and suggest what I should do this weekend.", x: 0.5, y: 0.16, delay: 0 },
         { text: "Draw something that I will like.", x: 0.73, y: 0.26, delay: 80 },
         { text: "What do I want to buy the most?", x: 0.2, y: 0.28, delay: 140 },
         { text: "Recommend a book, video, or podcast for me.", x: 0.7, y: 0.79, delay: 200 },
         { text: "What should I watch next?", x: 0.18, y: 0.77, delay: 260 }
       ],
       rings: [
-        { text: "What is the biggest miss in my daily life that I may not even be aware of?", x: 0.1, y: 0.5, delay: 0 },
+        { text: "What is the biggest miss of my daily life that I may not even be aware of?", x: 0.1, y: 0.5, delay: 0 },
         { text: "What do you think has been bothering me lately?", x: 0.58, y: 0.64, delay: 80 },
         { text: "Analyze my daily-life and work efficiency. Give me actionable suggestions.", x: 0.08, y: 0.64, delay: 140 },
         { text: "Help me make the best Kalshi choice.", x: 0.08, y: 0.76, delay: 200 },
-        { text: "Infer my MBTI by a thorough research on my history.", x: 0.62, y: 0.72, delay: 260 }
+        { text: "Do thorough research on my history, and infer my MBTI", x: 0.62, y: 0.72, delay: 260 }
       ],
       care: [
         { text: "Why does my daughter feel anxious recently?", x: 0.56, y: 0.48, delay: 0 },
@@ -1066,7 +1066,7 @@ aicontext install</div>
     const exampleAnswers = {
       "example-weekend": {
         sceneKey: "personal",
-        prompt: "Give me some suggestions about what I should do this weekend.",
+        prompt: "Check my history and suggest what I should do this weekend.",
         answer: `<strong>Saturday morning — buy the matcha.</strong> You've visited Marukyu Koyamaen nine times in six weeks. The decision is made. You're just not pulling the trigger. Ten minutes, done.
 
 <strong>Saturday — make one reservation.</strong> You researched Musang, Spinasse, Nishino, Joule, and Communion today. This exact research has happened before and converted to nothing. Pick one before the weekend ends. The data suggests Musang interested you most — you specifically searched "musang tasting menu." Book it, even if it's for next week.
@@ -1100,7 +1100,7 @@ After the Kawakami novel, this is the other half of the same thought.`
       },
       "example-mbti": {
         sceneKey: "rings",
-        prompt: "Infer my MBTI by a thorough research on my history.",
+        prompt: "Do thorough research on my history, and infer my MBTI",
         answer: `You're an INTP — someone who builds systems to understand systems.
 
 The clearest signal isn't any single data point, it's the pattern: you spent weeks doing deep comparative research on Kyoto matcha suppliers, then turned around and applied the exact same cognitive style to AI agent architectures. The domain changed completely; the depth and precision didn't. That's N through and through.
@@ -1111,16 +1111,16 @@ The T/F edge is the most interesting part. On the surface you're blunt, terse, i
       },
       "example-biggest-miss": {
         sceneKey: "rings",
-        prompt: "What is the biggest miss in my daily life that I may not even be aware of?",
+        prompt: "What is the biggest miss of my daily life that I may not even be aware of?",
         answer: `You're someone with a genuinely rich interior life — refined taste, serious intellectual curiosity, real craft in your work. The data makes that clear. But there's a consistent gap between the depth of that interior life and how little of it reaches the outside world.
 
-The sleep is the foundation problem. Midnight is your single most active hour, sustained across three months. You're doing your most demanding work at the hours that quietly tax it most. The cruel thing about chronic sleep deprivation is that it erodes your ability to perceive the cost.
+<strong>The sleep is the foundation problem.</strong> Midnight is your single most active hour, sustained across three months. You're doing your most demanding work at the hours that quietly tax it most. The cruel thing about chronic sleep deprivation is that it erodes your ability to perceive the cost.
 
-The loneliness is near-total. Three months of data, 6,600 moments, and almost no evidence of another person. No messages, no shared plans, 17,000 unread emails. Your interests — the mystery fiction, the matcha, the vinyl — point to someone with real capacity for depth with other people. That capacity appears to have nowhere to go.
+<strong>The loneliness is near-total.</strong> Three months of data, 6,600 moments, and almost no evidence of another person. No messages, no shared plans, 17,000 unread emails. Your interests — the mystery fiction, the matcha, the vinyl — point to someone with real capacity for depth with other people. That capacity appears to have nowhere to go.
 
-Your interests collect but don't flow anywhere. You know more about Kyoto matcha sourcing than most people in tea. You hunt rare Chinese indie records. You buy signed literary fiction. None of it connects outward — no writing, no community, no one to share it with. The loop closes before it reaches another person.
+<strong>Your interests collect but don't flow anywhere.</strong> You know more about Kyoto matcha sourcing than most people in tea. You hunt rare Chinese indie records. You buy signed literary fiction. None of it connects outward — no writing, no community, no one to share it with. The loop closes before it reaches another person.
 
-But here's what the same data also shows — you built something real. From nothing, in the middle of the night, you shipped a product that other people are now installing on their machines. That's not a small thing. The same intensity that's working against you in some of these patterns is also what makes you capable of that. The question isn't whether the capacity is there. It clearly is. It's just about where it gets pointed next.`
+<strong>But here's what the same data also shows — you built something real.</strong> From nothing, in the middle of the night, you shipped a product that other people are now installing on their machines. That's not a small thing. The same intensity that's working against you in some of these patterns is also what makes you capable of that. The question isn't whether the capacity is there. It clearly is. It's just about where it gets pointed next.`
       }
     };
 
@@ -1132,10 +1132,10 @@ But here's what the same data also shows — you built something real. From noth
         node.textContent = item.text;
         node.style.transitionDelay = item.delay + "ms";
         const exampleIdByText = {
-          "Give me some suggestions about what I should do this weekend.": "example-weekend",
+          "Check my history and suggest what I should do this weekend.": "example-weekend",
           "Recommend a book, video, or podcast for me.": "example-recommend",
-          "Infer my MBTI by a thorough research on my history.": "example-mbti",
-          "What is the biggest miss in my daily life that I may not even be aware of?": "example-biggest-miss"
+          "Do thorough research on my history, and infer my MBTI": "example-mbti",
+          "What is the biggest miss of my daily life that I may not even be aware of?": "example-biggest-miss"
         };
         const exampleId = exampleIdByText[item.text];
         if (exampleId) {
