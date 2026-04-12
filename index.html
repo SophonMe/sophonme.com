@@ -304,11 +304,119 @@
       transition: opacity 260ms ease, transform 260ms ease;
       text-wrap: balance;
       box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+      pointer-events: none;
     }
 
     .danmu.visible {
       opacity: 0.88;
       transform: translate3d(0, 0, 0) scale(1);
+    }
+
+    .danmu.clickable {
+      cursor: pointer;
+      border-color: rgba(216, 216, 216, 0.16);
+      color: rgba(232, 232, 232, 0.88);
+      padding-right: 30px;
+    }
+
+    .danmu.visible.clickable {
+      pointer-events: auto;
+    }
+
+    .danmu.clickable:hover {
+      opacity: 1;
+      border-color: rgba(216, 216, 216, 0.28);
+      background: rgba(24, 24, 24, 0.58);
+    }
+
+    .danmu.clickable::after {
+      content: "⤴";
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-52%);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.84rem;
+      color: rgba(232, 232, 232, 0.72);
+      pointer-events: none;
+    }
+
+    .example-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 220ms ease;
+    }
+
+    .example-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .example-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 8, 8, 0.72);
+      backdrop-filter: blur(10px);
+    }
+
+    .example-modal-card {
+      position: relative;
+      z-index: 1;
+      width: min(860px, calc(100vw - 32px));
+      max-height: min(82vh, 900px);
+      overflow: auto;
+      padding: 24px 24px 22px;
+      border: 1px solid rgba(216, 216, 216, 0.12);
+      border-radius: 28px;
+      background: rgba(18, 18, 18, 0.92);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+    }
+
+    .example-modal-kicker {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .example-modal-title {
+      margin: 0 0 16px;
+      max-width: 26ch;
+      font-size: clamp(1.4rem, 3vw, 2.3rem);
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+    }
+
+    .example-modal-answer {
+      margin: 0;
+      color: rgba(232, 232, 232, 0.84);
+      font-size: 1rem;
+      line-height: 1.72;
+      white-space: pre-wrap;
+    }
+
+    .example-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid rgba(216, 216, 216, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.74rem;
+      cursor: pointer;
     }
 
     .copy-btn {
@@ -595,6 +703,26 @@
         padding: 9px 12px;
       }
 
+      .example-modal {
+        padding: 16px;
+      }
+
+      .example-modal-card {
+        width: calc(100vw - 24px);
+        padding: 20px 18px 18px;
+        border-radius: 22px;
+      }
+
+      .example-modal-title {
+        max-width: 100%;
+        font-size: clamp(1.25rem, 7vw, 1.8rem);
+      }
+
+      .example-modal-answer {
+        font-size: 0.94rem;
+        line-height: 1.64;
+      }
+
       .top-link {
         top: 40px;
         right: 12px;
@@ -722,6 +850,15 @@ aicontext install</div>
     </div>
   </article>
   <div class="danmu-layer" id="danmuLayer"></div>
+  <div class="example-modal" id="exampleModal" aria-hidden="true">
+    <div class="example-modal-backdrop" id="exampleModalBackdrop"></div>
+    <section class="example-modal-card" role="dialog" aria-modal="true" aria-labelledby="exampleModalTitle">
+      <button class="example-modal-close" id="exampleModalClose" type="button">Close</button>
+      <p class="example-modal-kicker">Example answer</p>
+      <h2 class="example-modal-title" id="exampleModalTitle"></h2>
+      <p class="example-modal-answer" id="exampleModalAnswer"></p>
+    </section>
+  </div>
   <a class="top-link" href="https://github.com/SophonMe/AIContext" target="_blank" rel="noreferrer">GitHub</a>
   <div class="bottom-progress">
     <div class="progress-nav">
@@ -782,11 +919,17 @@ aicontext install</div>
     const prevSceneBtn = document.getElementById("prevSceneBtn");
     const nextSceneBtn = document.getElementById("nextSceneBtn");
     const copyBtn = document.getElementById("copyBtn");
+    const exampleModal = document.getElementById("exampleModal");
+    const exampleModalBackdrop = document.getElementById("exampleModalBackdrop");
+    const exampleModalClose = document.getElementById("exampleModalClose");
+    const exampleModalTitle = document.getElementById("exampleModalTitle");
+    const exampleModalAnswer = document.getElementById("exampleModalAnswer");
     let activeCopyKey = "";
     let copyEnterTimer = null;
     const danmuLayer = document.getElementById("danmuLayer");
     let lastDanmuKey = "";
     let hasInitializedCopy = false;
+    let activeExampleId = "";
 
     const stages = [
       {
@@ -920,6 +1063,67 @@ aicontext install</div>
       care: { x: 0.08, top: 0.5, gap: 0.095, stagger: 0.02 }
     };
 
+    const exampleAnswers = {
+      "example-weekend": {
+        sceneKey: "personal",
+        prompt: "Give me some suggestions about what I should do this weekend.",
+        answer: `<strong>Saturday morning — buy the matcha.</strong> You've visited Marukyu Koyamaen nine times in six weeks. The decision is made. You're just not pulling the trigger. Ten minutes, done.
+
+<strong>Saturday — make one reservation.</strong> You researched Musang, Spinasse, Nishino, Joule, and Communion today. This exact research has happened before and converted to nothing. Pick one before the weekend ends. The data suggests Musang interested you most — you specifically searched "musang tasting menu." Book it, even if it's for next week.
+
+<strong>Saturday afternoon — go to a record store in person.</strong> Record Store Day is April 19. Scope it out this weekend — Everyday Music on Capitol Hill, Easy Street in West Seattle, Bop Street in Ballard. It's one of the few interests you have that gets you out of the house and into a room with other people who share it.
+
+<strong>Sunday — stay off the computer.</strong> UW Quad and the Arboretum are at peak right now — cherry blossoms, early tulips. April in Seattle doesn't stay like this long. You opened an outdoor newsletter in March and did nothing with it. This is the weekend to actually go.`
+      },
+      "example-recommend": {
+        sceneKey: "personal",
+        prompt: "Recommend a book, video, or podcast for me.",
+        answer: `<strong>⏺ Book: Strange Weather in Tokyo by Hiromi Kawakami</strong>
+
+You went deep on "Walking with Sam" — a memoir about a solitary journey, a quiet human connection, something found by moving slowly through the world. This has the same texture, entirely different form.
+
+It's a short Japanese novel about a woman who starts meeting her old schoolteacher at a bar near her apartment. They drink sake, eat small dishes, talk about nothing important, and something slow and real develops between them. That's the whole thing. Set in exactly the kind of izakaya you'd be drawn to, written with the same precision and restraint you appreciate in the Japanese things you collect.
+
+It matters for you specifically because it's a novel about what happens when solitude starts, almost accidentally, letting someone in. Not a lesson. Just a very honest depiction of what that feels like.
+
+Not Murakami. Better, for this.
+
+<strong>⏺ Show: Midnight Diner: Tokyo Stories — Netflix</strong>
+
+A small Tokyo diner that only opens at midnight. The owner cooks whatever you ask for, if he has the ingredients. Each episode follows a different regular — a stripper, a debt collector, a woman who keeps falling for the wrong men — and the one dish they always order.
+
+That's the structure. What it's actually about is people who end up at a counter alone at 2am, and what they find there.
+
+You'll watch this between midnight and 3am, which is exactly when it should be watched. Short episodes. Very quiet. No plot in the conventional sense — just the accumulation of small, honest human moments around food.
+
+After the Kawakami novel, this is the other half of the same thought.`
+      },
+      "example-mbti": {
+        sceneKey: "rings",
+        prompt: "Infer my MBTI by a thorough research on my history.",
+        answer: `You're an INTP — someone who builds systems to understand systems.
+
+The clearest signal isn't any single data point, it's the pattern: you spent weeks doing deep comparative research on Kyoto matcha suppliers, then turned around and applied the exact same cognitive style to AI agent architectures. The domain changed completely; the depth and precision didn't. That's N through and through.
+
+Your I is unusually strong — not just "prefers alone time" but structurally oriented around solitude. 65% of all activity happens between 10pm and 3am. You use AI for the kind of self-reflection most people do with friends.
+
+The T/F edge is the most interesting part. On the surface you're blunt, terse, impatient with inefficiency. But you care deeply about how an animation feels, you hunt for signed first editions, you obsess over the right matcha grade. There's a strong aesthetic inner life that almost never surfaces in how you communicate outwardly.`
+      },
+      "example-biggest-miss": {
+        sceneKey: "rings",
+        prompt: "What is the biggest miss in my daily life that I may not even be aware of?",
+        answer: `You're someone with a genuinely rich interior life — refined taste, serious intellectual curiosity, real craft in your work. The data makes that clear. But there's a consistent gap between the depth of that interior life and how little of it reaches the outside world.
+
+The sleep is the foundation problem. Midnight is your single most active hour, sustained across three months. You're doing your most demanding work at the hours that quietly tax it most. The cruel thing about chronic sleep deprivation is that it erodes your ability to perceive the cost.
+
+The loneliness is near-total. Three months of data, 6,600 moments, and almost no evidence of another person. No messages, no shared plans, 17,000 unread emails. Your interests — the mystery fiction, the matcha, the vinyl — point to someone with real capacity for depth with other people. That capacity appears to have nowhere to go.
+
+Your interests collect but don't flow anywhere. You know more about Kyoto matcha sourcing than most people in tea. You hunt rare Chinese indie records. You buy signed literary fiction. None of it connects outward — no writing, no community, no one to share it with. The loop closes before it reaches another person.
+
+But here's what the same data also shows — you built something real. From nothing, in the middle of the night, you shipped a product that other people are now installing on their machines. That's not a small thing. The same intensity that's working against you in some of these patterns is also what makes you capable of that. The question isn't whether the capacity is there. It clearly is. It's just about where it gets pointed next.`
+      }
+    };
+
     const danmuNodes = {};
     Object.entries(danmuSpecs).forEach(([key, items]) => {
       danmuNodes[key] = items.map((item) => {
@@ -927,6 +1131,29 @@ aicontext install</div>
         node.className = "danmu";
         node.textContent = item.text;
         node.style.transitionDelay = item.delay + "ms";
+        const exampleIdByText = {
+          "Give me some suggestions about what I should do this weekend.": "example-weekend",
+          "Recommend a book, video, or podcast for me.": "example-recommend",
+          "Infer my MBTI by a thorough research on my history.": "example-mbti",
+          "What is the biggest miss in my daily life that I may not even be aware of?": "example-biggest-miss"
+        };
+        const exampleId = exampleIdByText[item.text];
+        if (exampleId) {
+          node.classList.add("clickable");
+          node.dataset.exampleId = exampleId;
+          node.setAttribute("role", "button");
+          node.setAttribute("tabindex", "0");
+          node.setAttribute("aria-label", `Open example answer for ${item.text}`);
+          node.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              const id = node.dataset.exampleId;
+              if (id) {
+                openExampleById(id);
+              }
+            }
+          });
+        }
         danmuLayer.appendChild(node);
         return node;
       });
@@ -1063,6 +1290,56 @@ aicontext install</div>
           }
         });
       });
+    }
+
+    function getStageIndexByKey(key) {
+      return stages.findIndex((stage) => stage.key === key);
+    }
+
+    function openExampleById(id, updateHash = true) {
+      const example = exampleAnswers[id];
+      if (!example || !exampleModal) {
+        return;
+      }
+      activeExampleId = id;
+      exampleModalTitle.textContent = example.prompt;
+      exampleModalAnswer.innerHTML = example.answer;
+      exampleModal.classList.add("open");
+      exampleModal.setAttribute("aria-hidden", "false");
+
+      const stageIndex = getStageIndexByKey(example.sceneKey);
+      if (stageIndex >= 0) {
+        scrollToStage(stageIndex);
+      }
+
+      if (updateHash && window.location.hash !== `#${id}`) {
+        history.replaceState(null, "", `#${id}`);
+      }
+    }
+
+    function closeExampleModal(updateHash = true) {
+      activeExampleId = "";
+      if (!exampleModal) {
+        return;
+      }
+      exampleModal.classList.remove("open");
+      exampleModal.setAttribute("aria-hidden", "true");
+      if (updateHash && window.location.hash.startsWith("#example-")) {
+        history.replaceState(null, "", "#story");
+      }
+    }
+
+    function syncExampleFromHash() {
+      const hash = window.location.hash.replace(/^#/, "");
+      if (!hash) {
+        closeExampleModal(false);
+        return;
+      }
+      if (exampleAnswers[hash]) {
+        openExampleById(hash, false);
+      } else if (activeExampleId) {
+        closeExampleModal(false);
+      }
     }
 
     function render() {
@@ -1644,21 +1921,18 @@ aicontext install</div>
       ctx.strokeStyle = "#d8d8d8";
 
       if (kind === "claude") {
-        // Anthropic Claude mark (CC0, commons.wikimedia.org/wiki/File:Claude_AI_symbol.svg)
         const size = 16;
         const scale = size / 1200;
         ctx.translate(x - size / 2, y - size / 2);
         ctx.scale(scale, scale);
         ctx.fill(new Path2D("M 233.959793 800.214905 L 468.644287 668.536987 L 472.590637 657.100647 L 468.644287 650.738403 L 457.208069 650.738403 L 417.986633 648.322144 L 283.892639 644.69812 L 167.597321 639.865845 L 54.926208 633.825623 L 26.577238 627.785339 L 3.3e-05 592.751709 L 2.73832 575.27533 L 26.577238 559.248352 L 60.724873 562.228149 L 136.187973 567.382629 L 249.422867 575.194763 L 331.570496 580.026978 L 453.261841 592.671082 L 472.590637 592.671082 L 475.328857 584.859009 L 468.724915 580.026978 L 463.570557 575.194763 L 346.389313 495.785217 L 219.543671 411.865906 L 153.100723 363.543762 L 117.181267 339.060425 L 99.060455 316.107361 L 91.248367 266.01355 L 123.865784 230.093994 L 167.677887 233.073853 L 178.872513 236.053772 L 223.248367 270.201477 L 318.040283 343.570496 L 441.825592 434.738342 L 459.946411 449.798706 L 467.194672 444.64447 L 468.080597 441.020203 L 459.946411 427.409485 L 392.617493 305.718323 L 320.778564 181.932983 L 288.80542 130.630859 L 280.348999 99.865845 C 277.369171 87.221436 275.194641 76.590698 275.194641 63.624268 L 312.322174 13.20813 L 332.8591 6.604126 L 382.389313 13.20813 L 403.248352 31.328979 L 434.013519 101.71814 L 483.865753 212.537048 L 561.181274 363.221497 L 583.812134 407.919434 L 595.892639 449.315491 L 600.40271 461.959839 L 608.214783 461.959839 L 608.214783 454.711609 L 614.577271 369.825623 L 626.335632 265.61084 L 637.771851 131.516846 L 641.718201 93.745117 L 660.402832 48.483276 L 697.530334 24.000122 L 726.52356 37.852417 L 750.362549 72 L 747.060486 94.067139 L 732.886047 186.201416 L 705.100708 330.52356 L 686.979919 427.167847 L 697.530334 427.167847 L 709.61084 415.087341 L 758.496704 350.174561 L 840.644348 247.490051 L 876.885925 206.738342 L 919.167847 161.71814 L 946.308838 140.29541 L 997.61084 140.29541 L 1035.38269 196.429626 L 1018.469849 254.416199 L 965.637634 321.422852 L 921.825562 378.201538 L 859.006714 462.765259 L 819.785278 530.41626 L 823.409424 535.812073 L 832.75177 534.92627 L 974.657776 504.724915 L 1051.328979 490.872559 L 1142.818848 475.167786 L 1184.214844 494.496582 L 1188.724854 514.147644 L 1172.456421 554.335693 L 1074.604126 578.496765 L 959.838989 601.449829 L 788.939636 641.879272 L 786.845764 643.409485 L 789.261841 646.389343 L 866.255127 653.637634 L 899.194702 655.409424 L 979.812134 655.409424 L 1129.932861 666.604187 L 1169.154419 692.537109 L 1192.671265 724.268677 L 1188.724854 748.429688 L 1128.322144 779.194641 L 1046.818848 759.865845 L 856.590759 714.604126 L 791.355774 698.335754 L 782.335693 698.335754 L 782.335693 703.731567 L 836.69812 756.885986 L 936.322205 846.845581 L 1061.073975 962.81897 L 1067.436279 991.490112 L 1051.409424 1014.120911 L 1034.496704 1011.704712 L 924.885986 929.234924 L 882.604126 892.107544 L 786.845764 811.48999 L 780.483276 811.48999 L 780.483276 819.946289 L 802.550415 852.241699 L 919.087341 1027.409424 L 925.127625 1081.127686 L 916.671204 1098.604126 L 886.469849 1109.154419 L 853.288696 1103.114136 L 785.073914 1007.355835 L 714.684631 899.516785 L 657.906067 802.872498 L 650.979858 806.81897 L 617.476624 1167.704834 L 601.771851 1186.147705 L 565.530212 1200 L 535.328857 1177.046997 L 519.302124 1139.919556 L 535.328857 1066.550537 L 554.657776 970.792053 L 570.362488 894.68457 L 584.536926 800.134277 L 592.993347 768.724976 L 592.429626 766.630859 L 585.503479 767.516968 L 514.22821 865.369263 L 405.825531 1011.865906 L 320.053711 1103.677979 L 299.516815 1111.812256 L 263.919525 1093.369263 L 267.221497 1060.429688 L 287.114136 1031.114136 L 405.825531 880.107361 L 477.422913 786.52356 L 523.651062 732.483276 L 523.328918 724.671265 L 520.590698 724.671265 L 205.288605 929.395935 L 149.154434 936.644409 L 124.993355 914.01355 L 127.973183 876.885986 L 139.409409 864.80542 L 234.201385 799.570435 L 233.879227 799.8927 Z"));
       } else if (kind === "codex") {
-        // OpenAI blossom mark (commons.wikimedia.org/wiki/File:OpenAI_Logo.svg)
         const size = 16;
         const scale = size / 315;
         ctx.translate(x - 197 * scale, y - 157 * scale);
         ctx.scale(scale, scale);
         ctx.fill(new Path2D("m297.06 130.97c7.26-21.79 4.76-45.66-6.85-65.48-17.46-30.4-52.56-46.04-86.84-38.68-15.25-17.18-37.16-26.95-60.13-26.81-35.04-.08-66.13 22.48-76.91 55.82-22.51 4.61-41.94 18.7-53.31 38.67-17.59 30.32-13.58 68.54 9.92 94.54-7.26 21.79-4.76 45.66 6.85 65.48 17.46 30.4 52.56 46.04 86.84 38.68 15.24 17.18 37.16 26.95 60.13 26.8 35.06.09 66.16-22.49 76.94-55.86 22.51-4.61 41.94-18.7 53.31-38.67 17.57-30.32 13.55-68.51-9.94-94.51zm-120.28 168.11c-14.03.02-27.62-4.89-38.39-13.88.49-.26 1.34-.73 1.89-1.07l63.72-36.8c3.26-1.85 5.26-5.32 5.24-9.07v-89.83l26.93 15.55c.29.14.48.42.52.74v74.39c-.04 33.08-26.83 59.9-59.91 59.97zm-128.84-55.03c-7.03-12.14-9.56-26.37-7.15-40.18.47.28 1.3.79 1.89 1.13l63.72 36.8c3.23 1.89 7.23 1.89 10.47 0l77.79-44.92v31.1c.02.32-.13.63-.38.83l-64.41 37.19c-28.69 16.52-65.33 6.7-81.92-21.95zm-16.77-139.09c7-12.16 18.05-21.46 31.21-26.29 0 .55-.03 1.52-.03 2.2v73.61c-.02 3.74 1.98 7.21 5.23 9.06l77.79 44.91-26.93 15.55c-.27.18-.61.21-.91.08l-64.42-37.22c-28.63-16.58-38.45-53.21-21.95-81.89zm221.26 51.49-77.79-44.92 26.93-15.54c.27-.18.61-.21.91-.08l64.42 37.19c28.68 16.57 38.51 53.26 21.94 81.94-7.01 12.14-18.05 21.44-31.2 26.28v-75.81c.03-3.74-1.96-7.2-5.2-9.06zm26.8-40.34c-.47-.29-1.3-.79-1.89-1.13l-63.72-36.8c-3.23-1.89-7.23-1.89-10.47 0l-77.79 44.92v-31.1c-.02-.32.13-.63.38-.83l64.41-37.16c28.69-16.55 65.37-6.7 81.91 22 6.99 12.12 9.52 26.31 7.15 40.1zm-168.51 55.43-26.94-15.55c-.29-.14-.48-.42-.52-.74v-74.39c.02-33.12 26.89-59.96 60.01-59.94 14.01 0 27.57 4.92 38.34 13.88-.49.26-1.33.73-1.89 1.07l-63.72 36.8c-3.26 1.85-5.26 5.31-5.24 9.06l-.04 89.79zm14.63-31.54 34.65-20.01 34.65 20v40.01l-34.65 20-34.65-20z"));
       } else if (kind === "openclaw") {
-        // OpenClaw favicon-mono.svg, viewBox 0 0 120 120
         const size = 16;
         const scale = size / 120;
         ctx.translate(x - 60 * scale, y - 60 * scale);
@@ -1670,7 +1944,6 @@ aicontext install</div>
         ctx.lineCap = "round";
         ctx.stroke(new Path2D("M45 15 Q35 5 30 8"));
         ctx.stroke(new Path2D("M75 15 Q85 5 90 8"));
-        // eyes (white fill on dark canvas)
         ctx.fillStyle = "#ffffff";
         ctx.beginPath(); ctx.arc(45, 35, 6, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(75, 35, 6, 0, Math.PI * 2); ctx.fill();
@@ -1774,6 +2047,32 @@ aicontext install</div>
     window.addEventListener("resize", resize);
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("load", resize);
+    window.addEventListener("hashchange", syncExampleFromHash);
+
+    exampleModalBackdrop.addEventListener("click", () => {
+      closeExampleModal();
+    });
+
+    danmuLayer.addEventListener("click", (event) => {
+      const target = event.target.closest(".danmu.clickable");
+      if (!target) {
+        return;
+      }
+      const id = target.dataset.exampleId;
+      if (id) {
+        openExampleById(id);
+      }
+    });
+
+    exampleModalClose.addEventListener("click", () => {
+      closeExampleModal();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && activeExampleId) {
+        closeExampleModal();
+      }
+    });
 
     async function copyInstallCommand(button) {
       const command = "pip install sophonme-aicontext\naicontext install";
@@ -1800,6 +2099,8 @@ aicontext install</div>
         await copyInstallCommand(introCopyBtn);
       });
     }
+
+    syncExampleFromHash();
 
     prevSceneBtn.addEventListener("click", () => {
       const progress = getProgress();
